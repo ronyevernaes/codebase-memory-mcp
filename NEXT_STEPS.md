@@ -186,10 +186,10 @@ Move the Docker files (`Dockerfile`, `NEXT_STEPS.md`, `.dockerignore`) onto
 their own branch so `main` never diverges from upstream:
 
 ```bash
-git checkout -b docker
+git checkout -b with-docker
 git add Dockerfile NEXT_STEPS.md .dockerignore
 git commit -m "Add Docker setup for containerized MCP server"
-git push -u origin docker
+git push -u origin with-docker
 ```
 
 ### 6b. Each time you want the latest upstream changes
@@ -201,7 +201,7 @@ git pull --ff-only upstream main
 git push origin main                              # optional: update your fork
 
 # 2. Replay your Docker commit onto the new main
-git checkout docker
+git checkout with-docker
 git rebase main
 git push --force-with-lease origin docker
 ```
