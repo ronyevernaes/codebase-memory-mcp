@@ -203,7 +203,7 @@ git push origin main                              # optional: update your fork
 # 2. Replay your Docker commit onto the new main
 git checkout with-docker
 git rebase main
-git push --force-with-lease origin docker
+git push --force-with-lease origin with-docker
 ```
 
 Because the Docker files are just added files upstream never touches, the
