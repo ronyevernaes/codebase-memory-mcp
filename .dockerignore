@@ -1,0 +1,6 @@
+.git
+build
+tests
+test-infrastructure
+docs
+*.md
