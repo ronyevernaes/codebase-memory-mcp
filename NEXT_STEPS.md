@@ -119,13 +119,8 @@ Do **not** use `cbm install` / the automatic installer for this setup — it
 would write a `command` pointing at a host-side binary, which isn't what you
 want here. This manual entry is the whole integration.
 
-<<<<<<< HEAD
-If you'd rather not hand-edit the config, `docker exec -i cbm-server
-/usr/local/bin/codebase-memory-mcp` is exactly what you'd otherwise get from
-=======
 If you'd rather not hand-edit the config, `docker exec -i -w
 /workspace/<project-folder> cbm-server /usr/local/bin/codebase-memory-mcp` is exactly what you'd otherwise get from
->>>>>>> docker-watcher-fix
 running the installer against a binary living on the host — you're just
 substituting the container path for the host path.
 
