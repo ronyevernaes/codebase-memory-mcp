@@ -44,6 +44,15 @@ RUN bash scripts/build.sh --with-ui CC=gcc CXX=g++ STATIC=1
 # ---- Runtime stage -----------------------------------------------------
 FROM alpine:3.21@sha256:a8560b36e8b8210634f77d9f7f9efd7ffa463e380b75e2e74aff4511df3ef88c
 
+# git is required by the background watcher: it detects changes solely via
+# `git rev-parse HEAD` / `git status --porcelain` (src/watcher/watcher.c).
+# Without it the index never auto-syncs. safe.directory: on Linux hosts the
+# bind-mounted project is owned by the host UID, not `cbm`, and git refuses it
+# as "dubious ownership" (Docker Desktop on macOS remaps ownership, so it's a
+# no-op there). Scope is fine: only /workspace is mounted.
+RUN apk add --no-cache git \
+    && git config --system --add safe.directory '*'
+
 RUN addgroup -S cbm && adduser -S -G cbm -h /home/cbm -s /sbin/nologin cbm \
     && mkdir -p /workspace /home/cbm/.cache/codebase-memory-mcp \
     && chown -R cbm:cbm /home/cbm /workspace

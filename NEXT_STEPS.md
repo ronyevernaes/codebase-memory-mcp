@@ -99,18 +99,33 @@ just wrapped in `docker exec`:
   "mcpServers": {
     "codebase-memory-mcp": {
       "command": "docker",
-      "args": ["exec", "-i", "cbm-server", "/usr/local/bin/codebase-memory-mcp"]
+      "args": ["exec", "-i", "-w", "/workspace/<project-folder>",
+               "cbm-server", "/usr/local/bin/codebase-memory-mcp"]
     }
   }
 }
 ```
 
+<<<<<<< HEAD
+=======
+The `-w /workspace/<project-folder>` is required, not cosmetic: the server
+derives the session's project root from its working directory. Without it,
+`docker exec` starts in the image's `WORKDIR /workspace`, so the watcher is
+registered on `/workspace` (not a git repo — nothing is ever auto-synced) and
+the session's default project name doesn't match the indexed project.
+
+>>>>>>> docker-watcher-fix
 Do **not** use `cbm install` / the automatic installer for this setup — it
 would write a `command` pointing at a host-side binary, which isn't what you
 want here. This manual entry is the whole integration.
 
+<<<<<<< HEAD
 If you'd rather not hand-edit the config, `docker exec -i cbm-server
 /usr/local/bin/codebase-memory-mcp` is exactly what you'd otherwise get from
+=======
+If you'd rather not hand-edit the config, `docker exec -i -w
+/workspace/<project-folder> cbm-server /usr/local/bin/codebase-memory-mcp` is exactly what you'd otherwise get from
+>>>>>>> docker-watcher-fix
 running the installer against a binary living on the host — you're just
 substituting the container path for the host path.
 
@@ -146,6 +161,45 @@ tool-call functionality isn't affected) — it looks like how this build's
 shared-daemon lifecycle behaves in general. If browsing the graph visually
 matters to you, treat that as a secondary feature to validate independently
 rather than assuming it works the same way the MCP tools do.
+
+## 4b. Verifying Claude Code is actually using it, and keeping the index fresh
+
+**Is Claude Code using the container?**
+
+- `/mcp` in Claude Code lists `codebase-memory-mcp` as connected with 15 tools.
+- `docker exec cbm-server ps` shows `codebase-memory-mcp` processes while a
+  Claude session is open.
+- Tail the daemon log; every session, watcher and index event lands here:
+  ```bash
+  docker exec cbm-server tail -f /home/cbm/.cache/codebase-memory-mcp/logs/cbm-daemon.log
+  ```
+  Look for `session.root.cwd path=/workspace/<project-folder>` (not bare
+  `/workspace`) and `watcher.baseline ... strategy=git` (`strategy=none` means
+  git is missing or the root is wrong).
+- Ask Claude "list indexed projects" — it should answer via `list_projects`.
+- Optional: add a line to the project's `CLAUDE.md` such as "Use the
+  codebase-memory-mcp tools for code-structure questions before grep" so
+  Claude reaches for it consistently.
+
+**Does the `cbm-cache` index update by itself?** Partly:
+
+- The background watcher polls `git status` / `HEAD` (every 5s + 1s per 500
+  files, max 60s) and incrementally reindexes on change — but it lives in the
+  shared daemon, which shuts down when the last MCP session disconnects. It
+  only syncs **while a Claude Code session is open**.
+- When a new session starts, the watcher adopts the current `HEAD` as its
+  baseline. Commits made (or pulled) while no session was open are **not**
+  picked up automatically; uncommitted edits are.
+- So: start each session with "index this repository". It's incremental
+  (only changed files are reparsed), so it's cheap, and it catches anything
+  that changed offline. Alternatively enable auto-indexing on session start:
+  ```bash
+  docker exec cbm-server codebase-memory-mcp config set auto_index true
+  ```
+- Quick check the watcher can see the repo:
+  ```bash
+  docker exec cbm-server git -C /workspace/<project-folder> rev-parse HEAD
+  ```
 
 ## 5. Day-to-day operation
 
