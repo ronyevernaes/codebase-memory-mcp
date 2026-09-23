@@ -46,10 +46,10 @@ docker run -d \
   --tmpfs /tmp \
   --cap-drop=ALL \
   --security-opt no-new-privileges \
-  -v "/absolute/path/to/your/project:/workspace:ro" \
+  -v "/absolute/path/to/your/project:/workspace/<project-folder>:ro" \
   -v cbm-cache:/home/cbm/.cache/codebase-memory-mcp \
   -e CBM_ALLOWED_ROOT=/workspace \
-  -p 127.0.0.1:9749:9749 \
+  -p 127.0.0.1:<project-port>:9749 \
   cbm:latest \
   sleep infinity
 ```
